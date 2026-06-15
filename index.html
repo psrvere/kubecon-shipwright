@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KubeCon India — Shipwright Table Prep</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3345;
+    --text: #e2e4ea;
+    --text-dim: #8b90a0;
+    --accent: #4f8cff;
+    --accent-dim: #2d5aa0;
+    --green: #34d399;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --purple: #a78bfa;
+    --cyan: #22d3ee;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* LAYOUT */
+  .app { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-header h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+
+  .sidebar-header .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .progress-bar {
+    margin: 16px 20px;
+    background: var(--surface2);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  .progress-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 0 20px;
+    margin-bottom: 16px;
+  }
+
+  .nav-section {
+    padding: 8px 0;
+  }
+
+  .nav-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    padding: 8px 20px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--surface2); color: var(--accent); border-left-color: var(--accent); }
+
+  .nav-item .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .nav-item.completed .dot {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .main {
+    margin-left: 280px;
+    flex: 1;
+    max-width: 900px;
+    padding: 40px 48px 120px;
+  }
+
+  /* MOBILE */
+  .menu-toggle {
+    display: none;
+    position: fixed;
+    top: 16px; left: 16px;
+    z-index: 200;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; padding: 24px 16px 120px; }
+    .menu-toggle { display: block; }
+  }
+
+  /* SECTIONS */
+  .section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    margin-bottom: 32px;
+  }
+
+  .section-header .layer-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+
+  .layer-1 { background: rgba(79,140,255,0.15); color: var(--accent); }
+  .layer-2 { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .layer-3 { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .layer-4 { background: rgba(52,211,153,0.15); color: var(--green); }
+
+  .section-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+
+  .section-header p {
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+
+  .time-estimate {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--surface);
+    padding: 4px 10px;
+    border-radius: 12px;
+    margin-top: 8px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card p, .card li {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  .card ul, .card ol {
+    padding-left: 20px;
+    margin-top: 8px;
+  }
+
+  .card li { margin-bottom: 6px; }
+
+  .card strong { color: var(--text); }
+
+  /* HIGHLIGHT BOX */
+  .highlight {
+    background: rgba(79,140,255,0.08);
+    border: 1px solid rgba(79,140,255,0.2);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+
+  .highlight.pitch {
+    background: rgba(52,211,153,0.08);
+    border-color: rgba(52,211,153,0.2);
+    font-style: italic;
+  }
+
+  .highlight.warning {
+    background: rgba(245,158,11,0.08);
+    border-color: rgba(245,158,11,0.2);
+  }
+
+  .highlight.blunt {
+    background: rgba(239,68,68,0.08);
+    border-color: rgba(239,68,68,0.2);
+  }
+
+  /* ACCORDION */
+  .accordion {
+    margin-bottom: 8px;
+  }
+
+  .accordion-trigger {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+
+  .accordion-trigger:hover { background: var(--surface2); }
+
+  .accordion-trigger .arrow {
+    transition: transform 0.2s;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .accordion.open .accordion-trigger { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .accordion.open .accordion-trigger .arrow { transform: rotate(180deg); }
+
+  .accordion-content {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 18px;
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  .accordion.open .accordion-content { display: block; }
+
+  /* CODE */
+  pre {
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #c9d1d9;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: var(--surface2);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  pre code { background: none; padding: 0; }
+
+  .code-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  /* TABLE */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  tr:hover td { background: rgba(79,140,255,0.04); }
+
+  td strong { color: var(--text); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-family: var(--font);
+    transition: all 0.15s;
+  }
+
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* CHECKLIST */
+  .checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+
+  .checklist-item:last-child { border-bottom: none; }
+
+  .checklist-item input[type="checkbox"] {
+    margin-top: 3px;
+    accent-color: var(--green);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  .checklist-item.checked label { color: var(--text-dim); text-decoration: line-through; }
+
+  /* CRD DIAGRAM */
+  .crd-diagram {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre;
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    overflow-x: auto;
+    margin: 16px 0;
+    color: var(--text-dim);
+  }
+
+  .crd-diagram .highlight-text { color: var(--accent); }
+  .crd-diagram .green-text { color: var(--green); }
+
+  /* QUIZ */
+  .quiz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .quiz-card h4 {
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .quiz-option {
+    display: block;
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font);
+    transition: all 0.15s;
+  }
+
+  .quiz-option:hover { border-color: var(--accent); color: var(--text); }
+  .quiz-option.correct { border-color: var(--green); background: rgba(52,211,153,0.1); color: var(--green); }
+  .quiz-option.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); color: var(--red); }
+
+  .quiz-explanation {
+    display: none;
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.2);
+    color: var(--green);
+  }
+
+  /* FLOW */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 16px 0;
+  }
+
+  .flow-step {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .flow-arrow { color: var(--text-dim); font-size: 16px; }
+
+  /* TAG */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-right: 4px;
+  }
+
+  .tag-green { background: rgba(52,211,153,0.15); color: var(--green); }
+  .tag-orange { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .tag-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tag-blue { background: rgba(79,140,255,0.15); color: var(--accent); }
+  .tag-purple { background: rgba(167,139,250,0.15); color: var(--purple); }
+
+  /* FOOTER NAV */
+  .footer-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.15s;
+  }
+
+  .footer-nav button:hover { background: var(--surface2); border-color: var(--accent); }
+  .footer-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 32px 0;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
+
+<div class="app">
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>Shipwright @ KubeCon</h1>
+    <div class="subtitle">Pavilion Table Prep Guide</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label" id="progressLabel">0 / 19 topics studied</div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Overview</div>
+    <a class="nav-item active" data-section="overview"><span class="dot"></span>Welcome & Study Plan</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Layer 1 — What & Why</div>
+    <a class="nav-item" data-section="problem"><span class="dot"></span>The Problem</a>
+    <a class="nav-item" data-section="what-is"><span class="dot"></span>What is Shipwright</a>
+    <a class="nav-item" data-section="elevator-pitch"><span class="dot"></span>Elevator Pitch</a>
+    <a class="nav-item" data-section="concepts"><span class="dot"></span>Key Concepts</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Layer 2 — How It Works</div>
+    <a class="nav-item" data-section="crds"><span class="dot"></span>CRD Model</a>
+    <a class="nav-item" data-section="build-yaml"><span class="dot"></span>Build YAML Deep Dive</a>
+    <a class="nav-item" data-section="buildrun"><span class="dot"></span>BuildRun & Execution</a>
+    <a class="nav-item" data-section="strategies"><span class="dot"></span>BuildStrategies</a>
+    <a class="nav-item" data-section="features"><span class="dot"></span>Key Features</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Layer 3 — Positioning</div>
+    <a class="nav-item" data-section="vs-buildconfig"><span class="dot"></span>vs BuildConfig</a>
+    <a class="nav-item" data-section="vs-tekton"><span class="dot"></span>vs Raw Tekton</a>
+    <a class="nav-item" data-section="vs-tools"><span class="dot"></span>vs Standalone Tools</a>
+    <a class="nav-item" data-section="landscape"><span class="dot"></span>Competitive Landscape</a>
+    <a class="nav-item" data-section="cncf"><span class="dot"></span>CNCF Story</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Layer 4 — Demo & FAQ</div>
+    <a class="nav-item" data-section="demos"><span class="dot"></span>Live Demos</a>
+    <a class="nav-item" data-section="faq"><span class="dot"></span>Top 15 FAQ</a>
+    <a class="nav-item" data-section="tough"><span class="dot"></span>Tough Questions</a>
+    <a class="nav-item" data-section="quiz"><span class="dot"></span>Self-Test Quiz</a>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- ============ OVERVIEW ============ -->
+<div class="section active" id="overview">
+  <div class="section-header">
+    <h2>KubeCon India — Shipwright Pavilion Prep</h2>
+    <p>A 1-day interactive study guide to prepare for hosting the Shipwright project table. Built from upstream docs, Adam Kaplan's demos, and competitive research.</p>
+  </div>
+
+  <div class="card">
+    <h3>Study Plan — 7 Hours</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Time</th><th>Layer</th><th>Activity</th></tr>
+        <tr><td><strong>1 hr</strong></td><td><span class="tag tag-blue">Layer 1</span></td><td>Problem, What is Shipwright, Elevator Pitch, Key Concepts</td></tr>
+        <tr><td><strong>2 hrs</strong></td><td><span class="tag tag-purple">Layer 2</span></td><td>CRDs, Build YAML, BuildRun, Strategies, Features</td></tr>
+        <tr><td><strong>30 min</strong></td><td colspan="2"><em>Lunch — practice elevator pitch out loud</em></td></tr>
+        <tr><td><strong>1.5 hrs</strong></td><td><span class="tag tag-orange">Layer 3</span></td><td>vs BuildConfig, vs Tekton, vs Tools, Landscape, CNCF</td></tr>
+        <tr><td><strong>1.5 hrs</strong></td><td><span class="tag tag-green">Layer 4</span></td><td>Demo setup + dry-run, FAQ practice, tough questions</td></tr>
+        <tr><td><strong>30 min</strong></td><td colspan="2"><em>Self-test quiz + review weak areas</em></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>How to Use This Guide</h3>
+    <ul>
+      <li>Navigate using the sidebar — topics are in study order</li>
+      <li>Click <strong>"Mark as Studied"</strong> checkboxes as you complete each topic</li>
+      <li>Progress bar tracks your completion across all 19 topics</li>
+      <li>Expand accordion sections for detailed content</li>
+      <li>Code blocks contain real YAML from the Shipwright repo</li>
+      <li>End with the Self-Test Quiz to validate your knowledge</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Your KubeCon Table Strategy</h3>
+    <p>Pavilion conversations are 5-10 minutes. Read the person in 30 seconds:</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Who walks up</th><th>Start at</th><th>Go to</th></tr>
+        <tr><td><strong>CNCF curious</strong> — "What is this?"</td><td>Elevator pitch</td><td>Quick demo</td></tr>
+        <tr><td><strong>Developer</strong> — "How do I use it?"</td><td>Build YAML</td><td>Strategy options, CNB demo</td></tr>
+        <tr><td><strong>Platform engineer</strong> — "Why should I adopt?"</td><td>vs BuildConfig</td><td>Multi-tenancy, security, caching</td></tr>
+        <tr><td><strong>OpenShift user</strong> — "We use BuildConfig"</td><td>vs BuildConfig</td><td>Migration path, future direction</td></tr>
+        <tr><td><strong>Tekton user</strong> — "We already have pipelines"</td><td>vs Raw Tekton</td><td>"Tekton is the engine" analogy</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LAYER 1: PROBLEM ============ -->
+<div class="section" id="problem">
+  <div class="section-header">
+    <span class="layer-badge layer-1">Layer 1 — What & Why</span>
+    <h2>The Problem</h2>
+    <p>Why building container images on Kubernetes is harder than it should be.</p>
+    <div class="time-estimate">&#9201; ~15 min</div>
+  </div>
+
+  <div class="card">
+    <h3>Before Shipwright, your options were...</h3>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>1. Docker outside the cluster</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Build on your laptop with <code>docker build</code>, push to a registry. <strong>Problems:</strong> doesn't scale, no CI/CD integration, no audit trail, works on "my machine" syndrome. Every developer has a different Docker version and build environment.
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>2. Docker-in-Docker (DinD)</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Run a Docker daemon inside a container on your Kubernetes cluster. <strong>Problems:</strong> requires <code>privileged: true</code> security context — massive security risk on shared clusters. One compromised build pod can access the host kernel. No multi-tenant isolation.
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>3. Single tool directly (Kaniko, Buildah, etc.)</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Each tool has its own CLI, config format, and quirks. Platform teams end up maintaining bespoke Tekton pipelines per tool. When you want to switch tools (e.g., Kaniko to BuildKit for cache performance), you rewrite everything. <strong>No unified API.</strong>
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>4. OpenShift BuildConfig</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Tightly coupled to OpenShift — not portable to vanilla Kubernetes. Limited to S2I and Docker strategy. API is frozen (v1, no new features). Docker builds require privileged containers. Jenkins Pipeline strategy already deprecated. <strong>Dead end.</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>How We Got Here — The Evolution</h3>
+    <p>Understanding <em>why</em> each tool exists helps you explain the landscape at the table:</p>
+
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>Era 1: Docker monopoly (2013-2017)</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Docker was the only game in town. <code>docker build</code> reads a Dockerfile, executes each instruction in a container, and produces an image. It worked great on laptops but had a fatal flaw for Kubernetes: <strong>it requires a Docker daemon running as root</strong>. On shared clusters, this means privileged containers — any build pod can escape to the host kernel. The Docker daemon is also monolithic — it does building, running, pushing, networking all in one process.
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>Era 2: The rootless revolution (2017-2019)</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        The security problem drove the community to create <strong>daemonless, rootless alternatives</strong>:
+        <ul style="margin-top:8px">
+          <li><strong>Kaniko</strong> (Google, 2018) — Solved "how do I build a Dockerfile without a Docker daemon?" Runs entirely in userspace with filesystem snapshotting. No root, no daemon. Trade-off: slower than Docker for large images, can't use BuildKit syntax.</li>
+          <li><strong>Buildah</strong> (Red Hat, 2017) — Solved "how do I build OCI images without Docker at all?" Uses Linux user namespaces for rootless builds. Part of the Podman/Buildah/Skopeo trio that replaced Docker on RHEL. Trade-off: Linux-only, needs some kernel features.</li>
+          <li><strong>BuildKit</strong> (Docker/Moby, 2017) — Docker's own answer to its own problems. Rebuilt the builder from scratch with a DAG-based execution model. Concurrent stage execution, advanced caching (inline, registry, S3), <code>RUN --mount</code> syntax. Trade-off: rootless mode still needs some privileges on K8s.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>Era 3: "What if no Dockerfile?" (2018-2020)</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Some tools asked a different question — <strong>why write a Dockerfile at all?</strong>
+        <ul style="margin-top:8px">
+          <li><strong>Cloud Native Buildpacks</strong> (Pivotal/Heroku, 2018) — Auto-detect your language, apply the right buildpack, produce an OCI image. No Dockerfile needed. Platform teams maintain buildpack images with security patches. Trade-off: builder images are 1GB+, opaque lifecycle, limited to supported languages.</li>
+          <li><strong>ko</strong> (Google, 2019) — For Go apps: run <code>go build</code>, layer the binary onto a distroless base, push. Images under 10MB. Absurdly fast. Trade-off: Go only, no OS packages, no cgo.</li>
+          <li><strong>Source-to-Image / S2I</strong> (Red Hat, 2015) — OpenShift's original "no Dockerfile" approach. Builder images contain build logic for a language. Trade-off: OpenShift-specific, limited ecosystem.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>Era 4: The fragmentation problem (2020-now)</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        <p>Now we have 7+ excellent build tools — each solving a real problem. But this created a <strong>new problem: fragmentation</strong>.</p>
+        <ul style="margin-top:8px">
+          <li>Team A uses Kaniko, Team B uses Buildpacks, Team C uses BuildKit</li>
+          <li>Each team has different Tekton pipelines, different credential management, different YAML</li>
+          <li>Platform teams can't enforce governance — they don't even know what tools teams are using</li>
+          <li>Switching tools means rewriting pipelines</li>
+          <li>No unified audit trail across tools</li>
+        </ul>
+        <p style="margin-top:8px"><strong>This is exactly what Shipwright solves.</strong> It doesn't replace these tools — it wraps them in a unified API. One Build spec, any strategy. The tools compete on build quality; Shipwright provides the management plane.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <strong>The fundamental tension:</strong> Developers want simple "source &#8594; image" workflows. Platform teams need security, multi-tenancy, and tool flexibility. No single tool satisfies both. Shipwright solves this by separating the concerns.
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-problem">
+    <label for="check-problem"><strong>Mark as studied</strong> — I can explain the evolution and why each tool exists</label>
+  </div>
+</div>
+
+<!-- ============ LAYER 1: WHAT IS SHIPWRIGHT ============ -->
+<div class="section" id="what-is">
+  <div class="section-header">
+    <span class="layer-badge layer-1">Layer 1 — What & Why</span>
+    <h2>What is Shipwright</h2>
+    <p>The core concept and architecture in one mental model.</p>
+    <div class="time-estimate">&#9201; ~15 min</div>
+  </div>
+
+  <div class="card">
+    <h3>One-sentence definition</h3>
+    <p>Shipwright is a <strong>Kubernetes-native framework</strong> that provides a <strong>unified API for building container images</strong>, powered by Tekton, with pluggable build strategies.</p>
+  </div>
+
+  <div class="card">
+    <h3>The Key Insight</h3>
+    <div class="highlight pitch">
+      Separate the "what to build" (Build/BuildRun — developer-facing) from the "how to build" (BuildStrategy — platform team-facing).
+    </div>
+    <p>This separation is what makes everything else possible — tool flexibility, governance, simplicity, and security.</p>
+  </div>
+
+  <div class="card">
+    <h3>Four Pillars</h3>
+    <div class="two-col">
+      <div class="highlight">
+        <strong>CNCF Sandbox Project</strong><br>
+        <span style="color:var(--text-dim)">Vendor neutral, community governed, open source.</span>
+      </div>
+      <div class="highlight">
+        <strong>Powered by Tekton</strong><br>
+        <span style="color:var(--text-dim)">Uses Tekton TaskRuns/PipelineRuns under the hood. Developers never see Tekton.</span>
+      </div>
+      <div class="highlight">
+        <strong>Strategy-Pluggable</strong><br>
+        <span style="color:var(--text-dim)">Buildah, Kaniko, BuildKit, Buildpacks, ko, S2I — all through one API.</span>
+      </div>
+      <div class="highlight">
+        <strong>Production-Ready</strong><br>
+        <span style="color:var(--text-dim)">Used in production by multiple organizations. Enterprise vendors build supported products on top of it.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-whatis">
+    <label for="check-whatis"><strong>Mark as studied</strong> — I can explain the what/how separation</label>
+  </div>
+</div>
+
+<!-- ============ ELEVATOR PITCH ============ -->
+<div class="section" id="elevator-pitch">
+  <div class="section-header">
+    <span class="layer-badge layer-1">Layer 1 — What & Why</span>
+    <h2>Elevator Pitch</h2>
+    <p>Practice this until you can say it naturally in 30 seconds.</p>
+    <div class="time-estimate">&#9201; ~10 min practice</div>
+  </div>
+
+  <div class="card">
+    <h3>The 30-Second Pitch</h3>
+    <div class="highlight pitch">
+      "Shipwright lets you build container images on Kubernetes with a simple, declarative API. You tell it where your source code is and where to push the image — it handles the rest. Platform teams choose the build tool — Buildah, Kaniko, Buildpacks, or others — through BuildStrategies, so developers get a consistent experience regardless of the underlying tool. It's a CNCF project that runs on any Kubernetes cluster."
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Key Analogies (pick one that fits)</h3>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>The Car Analogy (for Tekton users)</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        "Tekton is the engine. Shipwright is the car. You <em>could</em> drive the engine directly, but the car gives you a steering wheel, brakes, and a dashboard."
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>The CronJob Analogy (for K8s-savvy people)</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        "Build is like a CronJob template — it defines what you want. BuildRun is like an individual Job — it's one execution. BuildStrategy is like a plugin — the platform team installs it, developers just reference it by name."
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>The Plugin Analogy (for everyone)</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        "Think of it like WordPress plugins. Your platform team installs approved build strategies — Buildah, Buildpacks, Kaniko. Developers just pick one and build. If you want to switch from Kaniko to BuildKit, change one line in your YAML."
+      </div>
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-pitch">
+    <label for="check-pitch"><strong>Mark as studied</strong> — I can deliver the pitch in 30 seconds</label>
+  </div>
+</div>
+
+<!-- ============ KEY CONCEPTS ============ -->
+<div class="section" id="concepts">
+  <div class="section-header">
+    <span class="layer-badge layer-1">Layer 1 — What & Why</span>
+    <h2>Key Concepts</h2>
+    <p>Foundation knowledge you need before diving into the API.</p>
+    <div class="time-estimate">&#9201; ~20 min</div>
+  </div>
+
+  <div class="card">
+    <h3>Container Image Basics</h3>
+    <ul>
+      <li><strong>OCI Image Spec</strong> — container images are standardized. Any OCI-compliant tool produces the same format. This is why tool choice matters less than people think — the <em>output</em> is the same regardless of whether Buildah, Kaniko, or BuildKit built it.</li>
+      <li><strong>Layers</strong> — images are stacks of filesystem layers. Each Dockerfile instruction creates a layer. Understanding this helps explain caching: unchanged layers are reused.</li>
+      <li><strong>Image Digest</strong> — a SHA256 hash of the image manifest. Shipwright records this in BuildRun status for audit.</li>
+      <li><strong>Multi-arch / Manifest Lists</strong> — a single image tag can point to multiple architecture-specific images via an OCI Index (manifest list). Critical for ARM64 + AMD64 support.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>CNCF Landscape Position</h3>
+    <div class="flow">
+      <div class="flow-step">Source Code</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step" style="border-color:var(--accent);color:var(--accent)">Shipwright (Build API)</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step" style="border-color:var(--purple);color:var(--purple)">Tekton (Execution)</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Build Tool (Buildah/Kaniko/etc.)</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Container Registry</div>
+    </div>
+    <p style="font-size:13px;color:var(--text-dim);margin-top:8px">Shipwright sits between the developer and Tekton. It's not a CI/CD system — it's a build-specific abstraction layer.</p>
+  </div>
+
+  <div class="card">
+    <h3>Shipwright Project Structure</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Repository</th><th>What it is</th></tr>
+        <tr><td><strong>shipwright-io/build</strong></td><td>Core Build controller — CRDs, reconcilers, webhook</td></tr>
+        <tr><td><strong>shipwright-io/operator</strong></td><td>OLM operator for installing Shipwright</td></tr>
+        <tr><td><strong>shipwright-io/cli</strong></td><td><code>shp</code> CLI tool for managing builds</td></tr>
+        <tr><td><strong>shipwright-io/triggers</strong></td><td>Event-driven build triggers (webhooks, image changes)</td></tr>
+        <tr><td><strong>shipwright-io/website</strong></td><td>Documentation and blog at shipwright.io</td></tr>
+        <tr><td><strong>shipwright-io/community</strong></td><td>SHIPs (enhancement proposals), tracking issues</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-concepts">
+    <label for="check-concepts"><strong>Mark as studied</strong> — I understand OCI basics and where Shipwright fits</label>
+  </div>
+</div>
+
+<!-- ============ LAYER 2: CRDS ============ -->
+<div class="section" id="crds">
+  <div class="section-header">
+    <span class="layer-badge layer-2">Layer 2 — How It Works</span>
+    <h2>CRD Model</h2>
+    <p>The 4 custom resources that make up Shipwright.</p>
+    <div class="time-estimate">&#9201; ~20 min</div>
+  </div>
+
+  <div class="card">
+    <h3>Architecture Overview</h3>
+    <div class="crd-diagram"><span class="highlight-text">Platform Team Defines:</span>
+&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474; <span class="green-text">ClusterBuildStrategy</span>         <span class="green-text">BuildStrategy</span>         &#9474;
+&#9474; (cluster-wide, all namespaces)  (namespace-scoped)     &#9474;
+&#9474;                                                        &#9474;
+&#9474; HOW to build: steps, images, security, volumes         &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+
+<span class="highlight-text">Developer Defines:</span>
+&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474; <span class="highlight-text">Build</span>                          <span class="highlight-text">BuildRun</span>              &#9474;
+&#9474; WHAT to build:                  Execute one build:     &#9474;
+&#9474;  - source (git URL)              - references a Build  &#9474;
+&#9474;  - strategy reference             - can override params &#9474;
+&#9474;  - output image + secret          - immutable once run  &#9474;
+&#9474;  - parameters                     - OR standalone spec  &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</div>
+  </div>
+
+  <div class="card">
+    <h3>Override Precedence (the key design insight)</h3>
+    <div class="flow">
+      <div class="flow-step" style="border-color:var(--green);color:var(--green)">BuildRun (highest)</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step" style="border-color:var(--accent);color:var(--accent)">Build</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step" style="border-color:var(--purple);color:var(--purple)">Strategy defaults (lowest)</div>
+    </div>
+    <p style="font-size:13px;color:var(--text-dim);margin-top:12px">This is consistent across <strong>every</strong> overridable field: timeout, paramValues, output, env, stepResources, nodeSelector, tolerations, schedulerName, runtimeClassName, volumes. Platform teams set sensible defaults; developers override per-run.</p>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-crds">
+    <label for="check-crds"><strong>Mark as studied</strong> — I can draw the 4 CRDs and explain precedence</label>
+  </div>
+</div>
+
+<!-- ============ BUILD YAML ============ -->
+<div class="section" id="build-yaml">
+  <div class="section-header">
+    <span class="layer-badge layer-2">Layer 2 — How It Works</span>
+    <h2>Build YAML Deep Dive</h2>
+    <p>Real examples from the Shipwright repo with field-by-field explanation.</p>
+    <div class="time-estimate">&#9201; ~25 min</div>
+  </div>
+
+  <div class="card">
+    <h3>Minimal Build (12 lines)</h3>
+    <div class="code-label">build.yaml</div>
+    <pre><code>apiVersion: shipwright.io/v1beta1
+kind: Build
+metadata:
+  name: my-app
+spec:
+  source:
+    type: Git
+    git:
+      url: https://github.com/shipwright-io/sample-go
+    contextDir: docker-build
+  strategy:
+    name: buildah
+    kind: ClusterBuildStrategy
+  output:
+    image: quay.io/my-org/my-app:latest
+    pushSecret: my-registry-creds</code></pre>
+    <p style="font-size:13px;color:var(--text-dim)">That's it. Source, strategy, output. The developer doesn't need to know Tekton, pipelines, or Buildah flags.</p>
+  </div>
+
+  <div class="card">
+    <h3>Full Spec Fields</h3>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this, 'source-tab')">Source</button>
+      <button class="tab-btn" onclick="switchTab(this, 'output-tab')">Output</button>
+      <button class="tab-btn" onclick="switchTab(this, 'params-tab')">Parameters</button>
+      <button class="tab-btn" onclick="switchTab(this, 'advanced-tab')">Advanced</button>
+    </div>
+
+    <div class="tab-panel active" id="source-tab">
+      <div class="table-wrap">
+        <table>
+          <tr><th>Field</th><th>Description</th></tr>
+          <tr><td><code>source.type</code></td><td><strong>Git</strong>, OCI, or Local</td></tr>
+          <tr><td><code>source.git.url</code></td><td>Repository URL (HTTPS or SSH)</td></tr>
+          <tr><td><code>source.git.revision</code></td><td>Branch, tag, or commit SHA</td></tr>
+          <tr><td><code>source.git.cloneSecret</code></td><td>Secret for private repos</td></tr>
+          <tr><td><code>source.git.depth</code></td><td>Clone depth (default 1 = shallow)</td></tr>
+          <tr><td><code>source.contextDir</code></td><td>Subdirectory within repo</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="output-tab">
+      <div class="table-wrap">
+        <table>
+          <tr><th>Field</th><th>Description</th></tr>
+          <tr><td><code>output.image</code></td><td>Destination registry URL</td></tr>
+          <tr><td><code>output.pushSecret</code></td><td>Secret for registry auth</td></tr>
+          <tr><td><code>output.annotations</code></td><td>OCI annotations on image</td></tr>
+          <tr><td><code>output.labels</code></td><td>Labels on image</td></tr>
+          <tr><td><code>output.timestamp</code></td><td>Zero, SourceTimestamp, BuildTimestamp, or epoch</td></tr>
+          <tr><td><code>output.vulnerabilityScan</code></td><td>Enable scan, failOnFinding, ignore list</td></tr>
+        </table>
+      </div>
+      <div class="code-label">Vulnerability Scanning Example</div>
+      <pre><code>output:
+  image: registry.example.com/app:latest
+  pushSecret: creds
+  vulnerabilityScan:
+    enabled: true
+    failOnFinding: true
+    ignore:
+      issues: [CVE-2022-12345]
+      severity: Low
+      unfixed: true</code></pre>
+    </div>
+
+    <div class="tab-panel" id="params-tab">
+      <p>Parameters pass values into BuildStrategy steps. Support strings, arrays, ConfigMap references, and Secret references.</p>
+      <div class="code-label">ParamValues with ConfigMap + Secret</div>
+      <pre><code>paramValues:
+- name: build-args
+  values:
+  - configMapValue:
+      name: project-config
+      key: node-version
+      format: NODE_VERSION=${CONFIGMAP_VALUE}
+  - value: DEBUG_MODE=true
+  - secretValue:
+      name: npm-registry
+      key: auth-token
+      format: NPM_AUTH_TOKEN=${SECRET_VALUE}</code></pre>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px">The <code>format</code> syntax lets you compose values from external sources without scripting.</p>
+    </div>
+
+    <div class="tab-panel" id="advanced-tab">
+      <div class="table-wrap">
+        <table>
+          <tr><th>Field</th><th>Description</th></tr>
+          <tr><td><code>timeout</code></td><td>Go duration (default 10m)</td></tr>
+          <tr><td><code>env</code></td><td>Extra env vars (supports Downward API)</td></tr>
+          <tr><td><code>retention</code></td><td>TTL + limits for BuildRun cleanup</td></tr>
+          <tr><td><code>volumes</code></td><td>Override strategy volumes (if marked overridable)</td></tr>
+          <tr><td><code>stepResources</code></td><td>CPU/memory per strategy step <span class="tag tag-green">v0.19</span></td></tr>
+          <tr><td><code>nodeSelector</code></td><td>Schedule on specific nodes</td></tr>
+          <tr><td><code>tolerations</code></td><td>Tolerate taints (NoSchedule only)</td></tr>
+          <tr><td><code>schedulerName</code></td><td>Custom scheduler</td></tr>
+          <tr><td><code>runtimeClassName</code></td><td>Alternative runtime (kata, etc.) <span class="tag tag-green">v0.19</span></td></tr>
+          <tr><td><code>trigger</code></td><td>GitHub webhooks, image change, pipeline triggers</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-buildyaml">
+    <label for="check-buildyaml"><strong>Mark as studied</strong> — I can explain every Build spec field</label>
+  </div>
+</div>
+
+<!-- ============ BUILDRUN ============ -->
+<div class="section" id="buildrun">
+  <div class="section-header">
+    <span class="layer-badge layer-2">Layer 2 — How It Works</span>
+    <h2>BuildRun & Execution</h2>
+    <p>How builds actually execute, plus the standalone BuildRun pattern.</p>
+    <div class="time-estimate">&#9201; ~20 min</div>
+  </div>
+
+  <div class="card">
+    <h3>Controller Flow</h3>
+    <div class="flow">
+      <div class="flow-step">BuildRun created</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Validate Build + Strategy</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Generate Tekton TaskRun</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Tekton schedules Pod</div>
+    </div>
+    <div class="flow" style="margin-top:4px">
+      <div class="flow-step">Steps: clone &#8594; build &#8594; push</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Watch TaskRun status</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step" style="border-color:var(--green)">Update BuildRun (digest, size)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Two Patterns</h3>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this, 'ref-tab')">Reference a Build</button>
+      <button class="tab-btn" onclick="switchTab(this, 'standalone-tab')">Standalone BuildRun</button>
+    </div>
+    <div class="tab-panel active" id="ref-tab">
+      <pre><code>apiVersion: shipwright.io/v1beta1
+kind: BuildRun
+metadata:
+  name: my-app-run-1
+spec:
+  build:
+    name: my-app        # references existing Build
+  serviceAccount: pipeline
+  timeout: 15m          # override Build's timeout</code></pre>
+    </div>
+    <div class="tab-panel" id="standalone-tab">
+      <pre><code>apiVersion: shipwright.io/v1beta1
+kind: BuildRun
+metadata:
+  name: standalone-run
+spec:
+  build:
+    spec:               # embed Build spec inline
+      source:
+        type: Git
+        git:
+          url: https://github.com/shipwright-io/sample-go
+        contextDir: source-build
+      strategy:
+        kind: ClusterBuildStrategy
+        name: buildpacks-v3
+      output:
+        image: quay.io/my-org/app:latest</code></pre>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px">No Build CR needed — perfect for CI/CD pipelines where the build definition is ephemeral.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>What's in BuildRun Status (Audit Gold)</h3>
+    <ul>
+      <li><strong>Image digest</strong> — SHA256 of the built image</li>
+      <li><strong>Image size</strong> — compressed size</li>
+      <li><strong>Git commit SHA</strong> — exact commit that was built</li>
+      <li><strong>Git commit author</strong> — who committed</li>
+      <li><strong>Vulnerability scan results</strong> — CVE IDs with severities</li>
+      <li><strong>Build spec snapshot</strong> — copy of the Build spec at execution time (if the Build changes later, you still know what config produced each image)</li>
+      <li><strong>30+ failure reason codes</strong> — rich error reporting: <code>BuildRunTimeout</code>, <code>StepOutOfMemory</code>, <code>GitAuthInvalidKey</code>, <code>GitRevisionNotFound</code>, etc.</li>
+    </ul>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-buildrun">
+    <label for="check-buildrun"><strong>Mark as studied</strong> — I can explain BuildRun, overrides, and status fields</label>
+  </div>
+</div>
+
+<!-- ============ STRATEGIES ============ -->
+<div class="section" id="strategies">
+  <div class="section-header">
+    <span class="layer-badge layer-2">Layer 2 — How It Works</span>
+    <h2>BuildStrategies</h2>
+    <p>The pluggable build engine abstraction — where the real power is.</p>
+    <div class="time-estimate">&#9201; ~25 min</div>
+  </div>
+
+  <div class="card">
+    <h3>Supported Strategies</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Strategy</th><th>Tool</th><th>What it does</th><th>Rootless?</th><th>Platforms</th></tr>
+        <tr><td><strong>Buildah</strong></td><td>buildah</td><td>Dockerfile-based builds</td><td><span class="tag tag-green">Yes</span></td><td>All</td></tr>
+        <tr><td><strong>Multi-arch Buildah</strong></td><td>buildah</td><td>Orchestrator + per-arch jobs &#8594; manifest list</td><td><span class="tag tag-green">Yes</span></td><td>All</td></tr>
+        <tr><td><strong>Kaniko</strong></td><td>kaniko</td><td>Dockerfile in userspace, no daemon</td><td><span class="tag tag-green">Yes</span></td><td>All</td></tr>
+        <tr><td><strong>BuildKit</strong></td><td>buildkit</td><td>Daemonless, cache exporters, multi-platform</td><td><span class="tag tag-orange">Setup</span></td><td>All</td></tr>
+        <tr><td><strong>Buildpacks v3</strong></td><td>CNB lifecycle</td><td>Auto-detect language, no Dockerfile</td><td><span class="tag tag-green">Yes</span></td><td>amd64</td></tr>
+        <tr><td><strong>ko</strong></td><td>ko</td><td>Go binaries &#8594; images directly</td><td><span class="tag tag-green">Yes</span></td><td>All</td></tr>
+        <tr><td><strong>Source-to-Image</strong></td><td>s2i + kaniko</td><td>S2I generates Dockerfile, kaniko builds it</td><td><span class="tag tag-green">Yes</span></td><td>amd64</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>System Parameters (injected by controller)</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Parameter</th><th>Description</th></tr>
+        <tr><td><code>$(params.shp-source-root)</code></td><td>Absolute path to cloned source</td></tr>
+        <tr><td><code>$(params.shp-source-context)</code></td><td>Path to context dir</td></tr>
+        <tr><td><code>$(params.shp-output-directory)</code></td><td>Where to store image locally (Shipwright-managed push)</td></tr>
+        <tr><td><code>$(params.shp-output-image)</code></td><td>Output image URL</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Push Model Decision</h3>
+    <p>Strategy authors choose who pushes the image:</p>
+    <div class="two-col">
+      <div class="highlight">
+        <strong>Shipwright-managed push</strong><br>
+        <span style="color:var(--text-dim)">Strategy writes image to <code>$(params.shp-output-directory)</code>. Shipwright handles the push. Gets annotations/labels/SBOM for free.</span>
+      </div>
+      <div class="highlight">
+        <strong>Strategy-managed push</strong><br>
+        <span style="color:var(--text-dim)">Strategy pushes directly to <code>$(params.shp-output-image)</code>. Can optimize (skip base layer downloads). Annotations cause a second push.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-strategies">
+    <label for="check-strategies"><strong>Mark as studied</strong> — I can explain strategies, system params, and push models</label>
+  </div>
+</div>
+
+<!-- ============ KEY FEATURES ============ -->
+<div class="section" id="features">
+  <div class="section-header">
+    <span class="layer-badge layer-2">Layer 2 — How It Works</span>
+    <h2>Key Features</h2>
+    <p>The features that make people say "oh, that's nice."</p>
+    <div class="time-estimate">&#9201; ~15 min</div>
+  </div>
+
+  <div class="card">
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>Triggers — automatic builds</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        GitHub webhooks (Push, PullRequest), image change triggers (rebuild when base image updates), Tekton pipeline triggers. Separate <code>shipwright-io/triggers</code> controller.
+        <pre><code>trigger:
+  when:
+  - name: push-to-main
+    type: GitHub
+    github:
+      events: [Push]
+      branches: [main]</code></pre>
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>Vulnerability Scanning</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Built into the output spec. Scan results appear in BuildRun status with CVE IDs and severities. <code>failOnFinding: true</code> gates the build on security. Can ignore specific CVEs, unfixed vulnerabilities, or below a severity threshold.
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>Build Retention — auto-cleanup</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Auto-delete BuildRuns after a TTL (<code>ttlAfterFailed: 30m</code>, <code>ttlAfterSucceeded: 1h</code>) or keep only N most recent (<code>failedLimit: 10</code>, <code>succeededLimit: 20</code>). Cascade-delete BuildRuns when a Build is deleted with <code>atBuildDeletion: true</code>.
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>Volumes & Build Caching</span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Strategies define volumes with <code>overridable: true</code>. Developers override with PVCs for persistent caches. First build: 2+ minutes. Second build with cache: 30 seconds. Platform team sets up the caching strategy, every developer gets fast builds automatically.
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>Step Resource Overrides <span class="tag tag-green">v0.19</span></span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Developers can set CPU/memory per strategy step — fine-grained resource control without modifying the strategy.
+        <pre><code>strategy:
+  name: buildah
+  kind: ClusterBuildStrategy
+  stepResources:
+  - name: build
+    resources:
+      requests: { cpu: 500m, memory: 512Mi }
+      limits:   { cpu: "1", memory: 1Gi }</code></pre>
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>PipelineRun Execution Mode <span class="tag tag-green">v0.19</span></span><span class="arrow">&#9660;</span>
+      </button>
+      <div class="accordion-content">
+        Alternative to TaskRun for multi-pod build execution with PVC-based workspace storage. Foundation for multi-architecture build support — each arch runs as a separate pod on native hardware.
+      </div>
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-features">
+    <label for="check-features"><strong>Mark as studied</strong> — I can explain triggers, scanning, caching, and v0.19 features</label>
+  </div>
+</div>
+
+<!-- ============ LAYER 3: VS BUILDCONFIG ============ -->
+<div class="section" id="vs-buildconfig">
+  <div class="section-header">
+    <span class="layer-badge layer-3">Layer 3 — Positioning</span>
+    <h2>vs OpenShift BuildConfig</h2>
+    <p>Your #1 question from OpenShift users. Know this cold.</p>
+    <div class="time-estimate">&#9201; ~20 min</div>
+  </div>
+
+  <div class="card">
+    <h3>Comparison</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Dimension</th><th>BuildConfig (legacy)</th><th>Shipwright</th></tr>
+        <tr><td><strong>API</strong></td><td>v1, frozen — no new features</td><td>v1beta1, actively developed</td></tr>
+        <tr><td><strong>Build tools</strong></td><td>Docker build + S2I only</td><td>Buildah, Kaniko, BuildKit, Buildpacks, ko, S2I, custom</td></tr>
+        <tr><td><strong>Portability</strong></td><td>OpenShift-only</td><td>Any Kubernetes</td></tr>
+        <tr><td><strong>Extensibility</strong></td><td>None</td><td>BuildStrategy API — bring your own tool</td></tr>
+        <tr><td><strong>Multi-arch</strong></td><td>Not supported</td><td>Native multi-arch Buildah + PipelineRun mode</td></tr>
+        <tr><td><strong>Security</strong></td><td>Docker build needs privileged</td><td>Rootless by default</td></tr>
+        <tr><td><strong>Migration</strong></td><td>—</td><td>Crane-based migration tool (dev preview, Jan 2026)</td></tr>
+        <tr><td><strong>Future</strong></td><td>Deprecated path</td><td>Strategic direction for OpenShift</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Your Lines</h3>
+    <div class="highlight pitch">
+      <strong>Diplomatic:</strong> "BuildConfig served OpenShift well for years. Shipwright is the evolution — portable, extensible, and secure by default. It's where the community is investing."
+    </div>
+    <div class="highlight blunt">
+      <strong>Blunt (for platform engineers who push):</strong> "BuildConfig is a dead end. It's not getting new features, it can't do multi-arch, it requires privileged containers for Docker builds, and it only works on OpenShift. Migration tooling already exists."
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Migration Path</h3>
+    <ul>
+      <li><strong>S2I builds:</strong> Shipwright has an S2I strategy — existing builder images still work</li>
+      <li><strong>Docker builds:</strong> Switch to the Buildah strategy (rootless, more secure)</li>
+      <li><strong>Jenkins Pipeline:</strong> Already deprecated — move to Tekton pipelines or Shipwright</li>
+      <li><strong>YAML conversion:</strong> Build YAML is simpler than BuildConfig — concepts map 1:1</li>
+      <li><strong>Tooling:</strong> Crane-based migration tool auto-converts BuildConfig &#8594; Build (dev preview)</li>
+    </ul>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-buildconfig">
+    <label for="check-buildconfig"><strong>Mark as studied</strong> — I can explain why and how to migrate from BuildConfig</label>
+  </div>
+</div>
+
+<!-- ============ VS TEKTON ============ -->
+<div class="section" id="vs-tekton">
+  <div class="section-header">
+    <span class="layer-badge layer-3">Layer 3 — Positioning</span>
+    <h2>vs Raw Tekton</h2>
+    <p>"Why not just write a Tekton pipeline for builds?"</p>
+    <div class="time-estimate">&#9201; ~15 min</div>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <tr><th>Dimension</th><th>Raw Tekton</th><th>Shipwright</th></tr>
+        <tr><td><strong>YAML lines</strong></td><td>60-100+ (Task + Pipeline + PipelineRun + Workspaces)</td><td>~15-25 (Build + BuildRun)</td></tr>
+        <tr><td><strong>Abstraction</strong></td><td>General-purpose CI/CD</td><td>Purpose-built for builds</td></tr>
+        <tr><td><strong>Strategy reuse</strong></td><td>Copy-paste Tasks across teams</td><td>ClusterBuildStrategy — install once</td></tr>
+        <tr><td><strong>Credential mgmt</strong></td><td>Manual workspace/secret wiring</td><td>Declarative <code>pushSecret</code></td></tr>
+        <tr><td><strong>Build features</strong></td><td>Build yourself: clone, push, digest, scanning</td><td>All built-in</td></tr>
+        <tr><td><strong>Maintenance</strong></td><td>Every team maintains pipelines</td><td>Platform team maintains strategies</td></tr>
+      </table>
+    </div>
+
+    <div class="highlight pitch">
+      <strong>The line:</strong> "Tekton is the engine. Shipwright is the car. You <em>could</em> drive the engine directly — but you'd be reinventing source cloning, credential injection, image pushing, digest tracking, and vulnerability scanning. Shipwright gives you all of that with 12 lines of YAML."
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-tekton">
+    <label for="check-tekton"><strong>Mark as studied</strong> — I can explain the Tekton relationship clearly</label>
+  </div>
+</div>
+
+<!-- ============ VS STANDALONE TOOLS ============ -->
+<div class="section" id="vs-tools">
+  <div class="section-header">
+    <span class="layer-badge layer-3">Layer 3 — Positioning</span>
+    <h2>vs Standalone Tools</h2>
+    <p>For people who say "I just use Kaniko / ko / Buildpacks directly."</p>
+    <div class="time-estimate">&#9201; ~15 min</div>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <tr><th>Concern</th><th>Standalone tool</th><th>Shipwright</th></tr>
+        <tr><td><strong>Switching tools</strong></td><td>Rewrite CI/CD pipeline</td><td>Change one line (<code>strategy.name</code>)</td></tr>
+        <tr><td><strong>Multi-tenancy</strong></td><td>Roll your own RBAC</td><td>K8s-native namespaces, RBAC, resource limits</td></tr>
+        <tr><td><strong>Audit trail</strong></td><td>Check CI logs</td><td>BuildRun status: digest, commit, author — in K8s API</td></tr>
+        <tr><td><strong>Governance</strong></td><td>No control over dev choices</td><td>ClusterBuildStrategy — platform curates approved tools</td></tr>
+        <tr><td><strong>Consistency</strong></td><td>Every team does it differently</td><td>One API, one workflow, any tool</td></tr>
+      </table>
+    </div>
+
+    <div class="highlight pitch">
+      "You're not giving up your favorite tool — you're wrapping it in an API that gives your organization consistency, governance, and the ability to switch later without rewriting everything."
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Tool-Specific Details</h3>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Kaniko — rootless Dockerfile builds</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">Truly rootless and daemonless — safe for multi-tenant clusters. Uses userspace filesystem snapshotting. <strong>Limitations:</strong> Dockerfile-only, no BuildKit syntax (<code>RUN --mount=type=cache</code>), slower than BuildKit for large images, single-platform per run. Available as a Shipwright strategy.</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>BuildKit — Docker's next-gen builder</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">Advanced caching (inline, registry, S3), <code>RUN --mount</code> syntax, parallel stage execution, zstd compression. <strong>Limitations:</strong> Rootless mode still needs <code>privileged: true</code> with <code>hostUsers: false</code>; requires AppArmor/SecComp unconfined profiles. Available as a Shipwright strategy.</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Cloud Native Buildpacks — no Dockerfile needed</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">Auto-detects language, applies the right buildpack. Produces SBOMs. Supports image rebasing for OS patches. <strong>Limitations:</strong> Builder images are 1GB+, debugging is opaque, limited to languages with maintained buildpacks. CNCF Incubating. Available as a Shipwright strategy.</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>ko — Go-specific, ultra-fast</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">No Dockerfile, no Docker daemon. Runs <code>go build</code>, layers binary onto distroless base. Images under 10MB. Native multi-platform. Used by Tekton, Knative, Sigstore. <strong>Limitations:</strong> Go only, no cgo, no OS packages. CNCF Sandbox. Available as a Shipwright strategy.</div>
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-tools">
+    <label for="check-tools"><strong>Mark as studied</strong> — I can position against each standalone tool</label>
+  </div>
+</div>
+
+<!-- ============ LANDSCAPE ============ -->
+<div class="section" id="landscape">
+  <div class="section-header">
+    <span class="layer-badge layer-3">Layer 3 — Positioning</span>
+    <h2>Competitive Landscape</h2>
+    <p>The full picture — where everything sits.</p>
+    <div class="time-estimate">&#9201; ~15 min</div>
+  </div>
+
+  <div class="card">
+    <h3>Landscape Map</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Project</th><th>Category</th><th>Shipwright Relationship</th></tr>
+        <tr><td><strong>Tekton</strong></td><td>CI/CD engine</td><td>Shipwright's runtime — layer above, not competitor</td></tr>
+        <tr><td><strong>Kaniko</strong></td><td>Build tool</td><td>One of 7 Shipwright strategies</td></tr>
+        <tr><td><strong>BuildKit</strong></td><td>Build tool</td><td>One of 7 Shipwright strategies</td></tr>
+        <tr><td><strong>Buildpacks (CNB)</strong></td><td>Build tool</td><td>One of 7 Shipwright strategies</td></tr>
+        <tr><td><strong>ko</strong></td><td>Build tool</td><td>One of 7 Shipwright strategies</td></tr>
+        <tr><td><strong>BuildConfig</strong></td><td>Legacy OCP builds</td><td>Shipwright is its successor</td></tr>
+        <tr><td><strong>Google Cloud Build</strong></td><td>Managed service</td><td>Vendor lock-in, not portable, not self-hosted</td></tr>
+        <tr><td><strong>GitHub Actions</strong></td><td>Managed CI/CD</td><td>Off-cluster, no K8s-native governance</td></tr>
+        <tr><td><strong>GitLab CI/CD</strong></td><td>Managed CI/CD</td><td>Pipeline-first, not build-specific abstraction</td></tr>
+      </table>
+    </div>
+
+    <div class="highlight pitch">
+      <strong>The positioning:</strong> "Most 'competitors' are tools Shipwright can orchestrate. Shipwright isn't competing with Buildah — it's the framework that makes Buildah (and everything else) manageable at scale."
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Why In-Cluster Builds Matter</h3>
+    <p>For skeptics who say "just use GitHub Actions":</p>
+    <ul>
+      <li><strong>Data sovereignty</strong> — source code and images never leave your cluster</li>
+      <li><strong>Air-gapped environments</strong> — works without internet access</li>
+      <li><strong>Unified RBAC</strong> — one access control system for everything</li>
+      <li><strong>Supply chain security</strong> — Tekton Chains provides SLSA attestations</li>
+      <li><strong>Cost predictability</strong> — no per-minute billing at scale</li>
+      <li><strong>Cloud portability</strong> — same build definitions work anywhere</li>
+    </ul>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-landscape">
+    <label for="check-landscape"><strong>Mark as studied</strong> — I can place Shipwright in the landscape map</label>
+  </div>
+</div>
+
+<!-- ============ CNCF ============ -->
+<div class="section" id="cncf">
+  <div class="section-header">
+    <span class="layer-badge layer-3">Layer 3 — Positioning</span>
+    <h2>CNCF Story</h2>
+    <p>Project governance, community health, and enterprise adoption.</p>
+    <div class="time-estimate">&#9201; ~10 min</div>
+  </div>
+
+  <div class="card">
+    <h3>Project Facts</h3>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li><strong>Status:</strong> CNCF Sandbox (accepted Aug 2024)</li>
+          <li><strong>Previously:</strong> CDF Incubating</li>
+          <li><strong>Stars:</strong> 808+ on GitHub</li>
+          <li><strong>Contributors:</strong> 197 (+18% YoY)</li>
+          <li><strong>Contributing orgs:</strong> 78 (+37% YoY)</li>
+        </ul>
+      </div>
+      <div>
+        <ul>
+          <li><strong>Latest release:</strong> v0.19.7 (June 2026)</li>
+          <li><strong>Community calls:</strong> Weekly, Monday 9AM ET</li>
+          <li><strong>Enhancement process:</strong> SHIPs</li>
+          <li><strong>Slack:</strong> #shipwright on Kubernetes Slack</li>
+          <li><strong>YouTube:</strong> @shipwright-io</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Lines for the Table</h3>
+    <div class="highlight pitch">
+      "It's a CNCF project with open governance — community-owned, 78 contributing organizations. Enterprise vendors build supported products on top of it, but the upstream project runs on any Kubernetes."
+    </div>
+    <div class="highlight warning">
+      <strong>On "why Sandbox not Incubating":</strong> "The CNCF governance process takes time. Sandbox doesn't mean immature — it means the project has been vetted by the TOC as worth investing in. It's already used in production by multiple organizations."
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-cncf">
+    <label for="check-cncf"><strong>Mark as studied</strong> — I can talk about CNCF status and community</label>
+  </div>
+</div>
+
+<!-- ============ LAYER 4: DEMOS ============ -->
+<div class="section" id="demos">
+  <div class="section-header">
+    <span class="layer-badge layer-4">Layer 4 — Demo & FAQ</span>
+    <h2>Live Demos</h2>
+    <p>From Adam Kaplan's <code>builds-openshift-demos</code> repo. Pick 2 for the table.</p>
+    <div class="time-estimate">&#9201; ~45 min (setup + dry-run)</div>
+  </div>
+
+  <div class="card">
+    <h3>Demo 1: Build Strategies (2-3 min)</h3>
+    <p><strong>Point:</strong> Same app, two different strategies, one-line change.</p>
+    <div class="code-label">Step 1: S2I Build</div>
+    <pre><code>apiVersion: shipwright.io/v1beta1
+kind: Build
+metadata:
+  name: s2i-nodejs
+spec:
+  source:
+    type: Git
+    git:
+      url: https://github.com/sclorg/nodejs-ex
+  strategy:
+    name: source-to-image
+    kind: ClusterBuildStrategy
+  paramValues:
+  - name: builder-image
+    value: image-registry.openshift-image-registry.svc:5000/openshift/nodejs:16-ubi9
+  output:
+    image: image-registry.openshift-image-registry.svc:5000/demo-builds/nodejs-ex:s2i</code></pre>
+
+    <div class="code-label">Step 2: Buildah Build (same app, different strategy)</div>
+    <pre><code>apiVersion: shipwright.io/v1beta1
+kind: Build
+metadata:
+  name: buildah-nodejs
+spec:
+  source:
+    type: Git
+    git:
+      url: https://github.com/shipwright-io/sample-nodejs.git
+    contextDir: docker-build
+  strategy:
+    name: buildah                    # &lt;-- only this changes
+    kind: ClusterBuildStrategy
+  output:
+    image: image-registry.openshift-image-registry.svc:5000/demo-builds/nodejs-ex:buildah</code></pre>
+
+    <div class="code-label">Commands</div>
+    <pre><code>oc new-project demo-builds
+oc create imagestream nodejs-ex
+oc apply -f 01-s2i-nodejs-build.yaml
+shp build run s2i-nodejs --follow
+# Then switch strategy:
+oc apply -f 02-buildah-nodejs-build.yaml
+shp build run buildah-nodejs --follow</code></pre>
+  </div>
+
+  <div class="card">
+    <h3>Demo 2: Build Volumes / Caching (3-5 min)</h3>
+    <p><strong>Point:</strong> Platform team sets up caching, developers get fast builds.</p>
+    <div class="code-label">Build with PVC cache override</div>
+    <pre><code>apiVersion: shipwright.io/v1beta1
+kind: Build
+metadata:
+  name: buildah-nodejs-cache
+spec:
+  source:
+    type: Git
+    git:
+      url: https://github.com/shipwright-io/sample-nodejs.git
+    contextDir: docker-build
+  strategy:
+    name: buildah-cache
+    kind: BuildStrategy
+  output:
+    image: image-registry.openshift-image-registry.svc:5000/demo-builds/nodejs-ex:buildah
+  volumes:
+  - name: build-cache
+    persistentVolumeClaim:
+      claimName: build-cache          # PVC for layer caching</code></pre>
+
+    <div class="code-label">Demo flow</div>
+    <pre><code>oc apply -f 00-cache-pvc.yaml           # Create the PVC
+oc apply -f 01-buildah-cache-strategy.yaml  # Namespace strategy with cache volume
+oc apply -f 02-buildah-nodejs-cache-build.yaml
+
+time shp build run buildah-nodejs-cache --follow  # First: ~2 min
+time shp build run buildah-nodejs-cache --follow  # Second: ~30 sec!</code></pre>
+  </div>
+
+  <div class="card">
+    <h3>Demo Prep Checklist</h3>
+    <div class="checklist-item"><input type="checkbox"> Cluster running with Shipwright installed</div>
+    <div class="checklist-item"><input type="checkbox"> Clone <code>adambkaplan/builds-openshift-demos</code></div>
+    <div class="checklist-item"><input type="checkbox"> Registry secret pre-configured</div>
+    <div class="checklist-item"><input type="checkbox"> Dry-run Demo 1 (strategies) twice</div>
+    <div class="checklist-item"><input type="checkbox"> Dry-run Demo 2 (caching) twice</div>
+    <div class="checklist-item"><input type="checkbox"> Fallback: screenshots or terminal recordings ready</div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-demos">
+    <label for="check-demos"><strong>Mark as studied</strong> — I've practiced both demos</label>
+  </div>
+</div>
+
+<!-- ============ FAQ ============ -->
+<div class="section" id="faq">
+  <div class="section-header">
+    <span class="layer-badge layer-4">Layer 4 — Demo & FAQ</span>
+    <h2>Top 15 FAQ</h2>
+    <p>What people actually ask at a KubeCon pavilion table. Click to reveal answers.</p>
+    <div class="time-estimate">&#9201; ~30 min</div>
+  </div>
+
+  <div class="card">
+    <h3>The Basics</h3>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q1: "What is Shipwright?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"A Kubernetes-native framework for building container images. You define what to build in a simple YAML — source, strategy, output. Platform teams define how to build via strategies. Supports Buildah, Kaniko, Buildpacks, BuildKit, ko, and S2I — all through the same API. CNCF Sandbox project, runs on any K8s."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q2: "Is this a vendor thing or a community thing?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"Both — and primarily community. Shipwright is a CNCF Sandbox project — open governance, community-owned, 78 contributing organizations. It runs on any Kubernetes cluster."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q3: "How is this different from Tekton?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"Tekton is the engine, Shipwright is the car. You could wire up a Tekton pipeline for builds yourself — Task, Pipeline, PipelineRun, Workspace config — that's 60-100 lines of YAML. Shipwright does it in 12 lines because it's purpose-built for image builds. Source cloning, credential injection, image pushing, digest tracking, vulnerability scanning — all built in."</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The OpenShift Crowd</h3>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q4: "We use BuildConfig. Why switch?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"BuildConfig's API is frozen — no new features, no multi-arch, requires privileged containers for Docker builds, OpenShift-only. Shipwright is the strategic direction: portable, extensible, rootless by default. Migration tooling exists to help convert BuildConfig resources. The longer you wait, the more migration work piles up."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q5: "Is BuildConfig being deprecated?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"No hard removal date announced, but the trajectory is clear — similar to DeploymentConfig. All investment is in Shipwright. New features only land here. Migration tooling already exists — that's a strong signal."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q6: "How hard is migration?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"Smoother than you'd expect. S2I builds: Shipwright has an S2I strategy — your builder images still work. Docker builds: switch to Buildah (rootless, more secure). Concepts map 1:1. The Crane migration tool auto-converts YAML. Build YAML is actually simpler than BuildConfig."</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Platform Engineer</h3>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q7: "How does multi-tenancy work?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"ClusterBuildStrategies are cluster-wide — platform teams install approved tools. BuildStrategies are namespace-scoped for experimentation. RBAC controls who can create Builds. Only cluster admins can write ClusterBuildStrategies. Resource limits are set on strategy steps."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q8: "Can I bring my own build tool?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"Yes — that's the whole point. A BuildStrategy is a template of container steps. If you can express your build as steps in containers, you can make a strategy. Teams have written custom strategies for proprietary compilers, compliance scanners, WASM builds — anything."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q9: "Secrets and credentials?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"K8s Secrets referenced directly in the Build spec — <code>pushSecret</code> for registry, <code>cloneSecret</code> for git. Shipwright injects them into the right steps. You can also pass Secret/ConfigMap values as strategy parameters with format strings."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q10: "Build caching?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"Strategies define volumes marked as <code>overridable: true</code>. Developers replace them with PVCs. Buildah gets layer caching, BuildKit gets its cache exporters, Buildpacks has built-in layer caching. First build: 2+ min. With cache: ~30 seconds. Platform team configures it once, every developer benefits."</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Technical Deep-Dive</h3>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q11: "Multi-arch builds?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"Two approaches. (1) Multi-arch native Buildah strategy: orchestrator pod spawns one Job per architecture on native hardware, assembles a manifest list. (2) PipelineRun execution mode (v0.19): multi-pod builds with PVC workspaces — foundation for even more flexible multi-arch support."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q12: "Vulnerability scanning?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"First-class API — add <code>vulnerabilityScan</code> to your Build spec. Set <code>failOnFinding: true</code> to gate builds on security. Results appear in BuildRun status with CVE IDs and severities. Ignore specific CVEs, unfixed vulns, or below a severity threshold."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q13: "Automatic triggers?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"Three types: GitHub webhooks (Push, PullRequest), image change triggers (rebuild when base image updates), and Tekton Pipeline triggers. Separate <code>shipwright-io/triggers</code> controller handles event routing."</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Skeptic</h3>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q14: "Why not GitHub Actions?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"Works great for simple cases. Shipwright shines when you need: builds inside your cluster (air-gapped, data sovereignty), consistent governance across teams, strategy abstraction (switch tools without rewriting pipelines), K8s-native audit trail (digest, commit, author in the API), and cost predictability at scale."</div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>Q15: "Is this production-ready?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">"Yes. Shipwright is at v0.19 with active development. 808+ stars, 78 contributing organizations, weekly community calls. CNCF Sandbox project, used in production by multiple organizations, with enterprise vendors building supported products on top."</div>
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-faq">
+    <label for="check-faq"><strong>Mark as studied</strong> — I can answer all 15 FAQs confidently</label>
+  </div>
+</div>
+
+<!-- ============ TOUGH QUESTIONS ============ -->
+<div class="section" id="tough">
+  <div class="section-header">
+    <span class="layer-badge layer-4">Layer 4 — Demo & FAQ</span>
+    <h2>Tough Questions</h2>
+    <p>The ones that could catch you off guard. Practice these.</p>
+    <div class="time-estimate">&#9201; ~15 min</div>
+  </div>
+
+  <div class="card">
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>"What's the roadmap?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">
+        <p>Know the SHIPs in progress:</p>
+        <ul>
+          <li><strong>SHIP-0040</strong> — RuntimeClass support (landed in v0.19)</li>
+          <li><strong>SHIP-0043</strong> — Multi-Arch Image Builds (in progress)</li>
+          <li><strong>SHIP-0044</strong> — BuildRun Executor Field</li>
+          <li><strong>SHIP-0046</strong> — Build Step Resources Override (landed in v0.19)</li>
+          <li><strong>SHIP-0041</strong> — Documentation Restructure</li>
+        </ul>
+        <p>Check the community meeting notes before KubeCon for latest v0.20 plans. Version mapping: v0.20 upstream = builds-1.9 downstream.</p>
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>"Why CNCF Sandbox and not Incubating?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">
+        "The CNCF governance process takes time. Shipwright migrated from CDF to CNCF in August 2024 — relatively recent. Sandbox means the TOC has vetted it as worth investing in. Multiple organizations use it in production — that's probably a stronger maturity signal than a CNCF tier label."
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>"Can it work with Argo instead of Tekton?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">
+        "Currently Tekton-only — this is a deliberate design choice. Tekton is the CNCF standard for Kubernetes-native task execution. The architecture could theoretically support other executors (the PipelineRun mode in v0.19 shows the executor is somewhat abstracted), but it's not on the roadmap. Tekton gives us battle-tested scheduling, step sequencing, and result reporting."
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>"How does this compare to kpack?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">
+        "kpack is a Kubernetes-native platform specifically for Cloud Native Buildpacks. It's great if you're all-in on Buildpacks. Shipwright is broader — it supports Buildpacks as one of many strategies, alongside Buildah, Kaniko, BuildKit, ko, and S2I. If your org uses different tools for different teams, Shipwright gives you one API for all of them."
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>"What about supply chain security / SLSA?"</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">
+        "Shipwright runs on Tekton, and Tekton Chains provides SLSA supply-chain attestations. BuildRun status records the exact source commit, image digest, and build configuration — that's your audit trail. Vulnerability scanning is built into the API. The combination of Shipwright + Tekton Chains gives you in-cluster builds with cryptographic provenance."
+      </div>
+    </div>
+    <div class="accordion">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)"><span>"We tried it and builds were slow..."</span><span class="arrow">&#9660;</span></button>
+      <div class="accordion-content">
+        "First question: are you using caching? Without PVC-backed caches, every build starts from scratch. Second: check your step resources — Tekton only gives full resource requests to the step with the highest value (others get zero or LimitRange minimum). Use <code>stepResources</code> (v0.19) to tune. Third: consider your strategy choice — BuildKit with inline cache is often fastest for Dockerfile builds."
+      </div>
+    </div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-tough">
+    <label for="check-tough"><strong>Mark as studied</strong> — I've practiced tough question answers</label>
+  </div>
+</div>
+
+<!-- ============ QUIZ ============ -->
+<div class="section" id="quiz">
+  <div class="section-header">
+    <span class="layer-badge layer-4">Layer 4 — Demo & FAQ</span>
+    <h2>Self-Test Quiz</h2>
+    <p>10 questions to validate your readiness. Click options to check.</p>
+    <div class="time-estimate">&#9201; ~15 min</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>1. What is the core design insight of Shipwright?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Build images faster than any other tool</button>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">Separate "what to build" (Build/BuildRun) from "how to build" (BuildStrategy)</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Replace Tekton with a simpler pipeline system</button>
+    <div class="quiz-explanation">The separation of concerns between developer-facing Build/BuildRun and platform team-facing BuildStrategy is the key design insight that enables everything else.</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>2. What is the override precedence chain?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Strategy > Build > BuildRun</button>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">BuildRun > Build > Strategy defaults</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Build > BuildRun > Strategy defaults</button>
+    <div class="quiz-explanation">BuildRun has highest precedence, then Build, then Strategy defaults. This is consistent across every overridable field.</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>3. What does Shipwright use under the hood for execution?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Docker daemon</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Argo Workflows</button>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">Tekton TaskRuns / PipelineRuns</button>
+    <div class="quiz-explanation">Shipwright's Build controller generates Tekton TaskRuns (or PipelineRuns in v0.19+). Developers never see Tekton directly — it's an implementation detail.</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>4. How many lines of YAML does a minimal Shipwright Build require?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">~12-15 lines</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">~60-100 lines</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">~30-40 lines</button>
+    <div class="quiz-explanation">A minimal Build is about 12 lines: source (git URL), strategy reference, output (image + secret). Compare to 60-100+ lines for raw Tekton.</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>5. What is the relationship between Shipwright and BuildConfig?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">BuildConfig is an alternative to Shipwright</button>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">Shipwright is BuildConfig's successor with migration tooling available</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">They are unrelated projects</button>
+    <div class="quiz-explanation">Shipwright is the evolution of BuildConfig. Migration tooling exists (Crane-based, dev preview) and all new feature investment goes into Shipwright.</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>6. Which of these is NOT a supported Shipwright build strategy?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">ko (Go-specific)</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Cloud Native Buildpacks</button>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">Bazel</button>
+    <div class="quiz-explanation">Shipwright ships strategies for Buildah, multi-arch Buildah, Kaniko, BuildKit, Buildpacks v3, ko, and S2I. Bazel is not included, but you could write a custom BuildStrategy for it.</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>7. What is a ClusterBuildStrategy vs BuildStrategy?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">ClusterBuildStrategy is cluster-wide; BuildStrategy is namespace-scoped</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">ClusterBuildStrategy runs on multiple clusters</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">There is no difference — they are aliases</button>
+    <div class="quiz-explanation">ClusterBuildStrategy is available to all namespaces (installed by platform teams). BuildStrategy is namespace-scoped (for experimentation or team-specific tools).</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>8. What is Shipwright's CNCF status?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">CNCF Incubating</button>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">CNCF Sandbox (accepted Aug 2024)</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">CNCF Graduated</button>
+    <div class="quiz-explanation">Shipwright is a CNCF Sandbox project, accepted in August 2024 after migrating from the Continuous Delivery Foundation (CDF).</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>9. How does Shipwright handle build caching?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Built-in distributed cache service</button>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">Strategies define overridable volumes; developers replace with PVCs</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Caching is not supported</button>
+    <div class="quiz-explanation">Strategies declare volumes with overridable: true. Developers override them with PersistentVolumeClaims for persistent caches. This works with Buildah layer caching, BuildKit cache exporters, and Buildpacks built-in caching.</div>
+  </div>
+
+  <div class="quiz-card">
+    <h4>10. What new features were added in Shipwright v0.19?</h4>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">GraphQL API and web dashboard</button>
+    <button class="quiz-option" onclick="checkQuiz(this, true)">Step resource overrides, runtimeClassName, PipelineRun execution mode</button>
+    <button class="quiz-option" onclick="checkQuiz(this, false)">Windows container support</button>
+    <div class="quiz-explanation">v0.19 added: stepResources (CPU/memory per strategy step), runtimeClassName (kata etc.), and PipelineRun execution mode (multi-pod builds, foundation for multi-arch).</div>
+  </div>
+
+  <div class="checklist-item">
+    <input type="checkbox" onchange="updateProgress(this)" id="check-quiz">
+    <label for="check-quiz"><strong>Mark as studied</strong> — I passed the quiz confidently</label>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// Navigation
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const sectionId = item.dataset.section;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+    item.classList.add('active');
+    document.querySelector('.sidebar').classList.remove('open');
+    window.scrollTo(0, 0);
+  });
+});
+
+// Accordion
+function toggleAccordion(trigger) {
+  const accordion = trigger.parentElement;
+  accordion.classList.toggle('open');
+}
+
+// Tabs
+function switchTab(btn, panelId) {
+  const card = btn.closest('.card');
+  card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  card.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// Quiz
+function checkQuiz(btn, correct) {
+  const card = btn.closest('.quiz-card');
+  if (card.dataset.answered) return;
+  card.dataset.answered = 'true';
+  if (correct) {
+    btn.classList.add('correct');
+  } else {
+    btn.classList.add('wrong');
+    card.querySelectorAll('.quiz-option').forEach(o => {
+      if (!o.classList.contains('wrong')) {
+        // find the correct one
+      }
+    });
+  }
+  card.querySelector('.quiz-explanation').style.display = 'block';
+}
+
+// Progress
+function updateProgress(checkbox) {
+  const item = checkbox.closest('.checklist-item');
+  if (checkbox.checked) {
+    item.classList.add('checked');
+  } else {
+    item.classList.remove('checked');
+  }
+
+  // Update nav dots
+  const sectionEl = checkbox.closest('.section');
+  const sectionId = sectionEl.id;
+  const navItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+  if (navItem && checkbox.checked) {
+    navItem.classList.add('completed');
+  } else if (navItem && !checkbox.checked) {
+    navItem.classList.remove('completed');
+  }
+
+  // Update progress bar
+  const total = document.querySelectorAll('.checklist-item input[type="checkbox"][onchange]').length;
+  const checked = document.querySelectorAll('.checklist-item input[type="checkbox"][onchange]:checked').length;
+  const pct = Math.round((checked / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = checked + ' / ' + total + ' topics studied';
+
+  // Save to localStorage
+  saveProgress();
+}
+
+// Persist progress
+function saveProgress() {
+  const checks = {};
+  document.querySelectorAll('.checklist-item input[type="checkbox"][onchange]').forEach(cb => {
+    checks[cb.id] = cb.checked;
+  });
+  localStorage.setItem('shipwright-prep-progress', JSON.stringify(checks));
+}
+
+function loadProgress() {
+  const saved = localStorage.getItem('shipwright-prep-progress');
+  if (!saved) return;
+  const checks = JSON.parse(saved);
+  Object.entries(checks).forEach(([id, checked]) => {
+    const cb = document.getElementById(id);
+    if (cb) {
+      cb.checked = checked;
+      if (checked) {
+        cb.closest('.checklist-item').classList.add('checked');
+        const sectionEl = cb.closest('.section');
+        const navItem = document.querySelector(`.nav-item[data-section="${sectionEl.id}"]`);
+        if (navItem) navItem.classList.add('completed');
+      }
+    }
+  });
+  const total = document.querySelectorAll('.checklist-item input[type="checkbox"][onchange]').length;
+  const checked = document.querySelectorAll('.checklist-item input[type="checkbox"][onchange]:checked').length;
+  const pct = Math.round((checked / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = checked + ' / ' + total + ' topics studied';
+}
+
+loadProgress();
+</script>
+</body>
+</html>
