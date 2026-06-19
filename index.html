@@ -1225,6 +1225,27 @@ spec:
   </div>
 
   <div class="card">
+    <h3>Why Multiple Strategies?</h3>
+    <p>There is no single "best" way to build a container image. Different teams have different needs:</p>
+    <div class="highlight" style="margin-bottom:1rem">
+      <strong>&#128218; Different inputs</strong><br>
+      <span style="color:var(--text-dim)">Some teams write Dockerfiles, others don't want to. Buildpacks auto-detect your language. ko compiles Go directly. S2I uses builder images. Shipwright lets each team use what fits.</span>
+    </div>
+    <div class="highlight" style="margin-bottom:1rem">
+      <strong>&#128274; Different security postures</strong><br>
+      <span style="color:var(--text-dim)">Some clusters ban privileged containers entirely (rootless-only). Others need daemon-based tools for cache performance. The strategy abstraction lets platform teams enforce policy without blocking developers.</span>
+    </div>
+    <div class="highlight" style="margin-bottom:1rem">
+      <strong>&#9889; Different performance profiles</strong><br>
+      <span style="color:var(--text-dim)">BuildKit has advanced layer caching and parallel stage execution. Kaniko trades speed for zero-privilege simplicity. ko skips the Dockerfile entirely for fastest Go builds. Teams pick the right tradeoff.</span>
+    </div>
+    <div class="highlight">
+      <strong>&#127919; One API, many engines</strong><br>
+      <span style="color:var(--text-dim)">Developers use the same <code>Build</code>/<code>BuildRun</code> CRDs regardless of strategy. Platform teams swap engines without changing developer workflows. That's the whole point of the abstraction.</span>
+    </div>
+  </div>
+
+  <div class="card">
     <h3>Supported Strategies</h3>
     <div class="table-wrap">
       <table>
@@ -1236,6 +1257,22 @@ spec:
         <tr><td><strong>Buildpacks v3</strong></td><td>CNB lifecycle</td><td>Auto-detect language, no Dockerfile</td><td><span class="tag tag-green">Yes</span></td><td>amd64</td></tr>
         <tr><td><strong>ko</strong></td><td>ko</td><td>Go binaries &#8594; images directly</td><td><span class="tag tag-green">Yes</span></td><td>All</td></tr>
         <tr><td><strong>Source-to-Image</strong></td><td>s2i + kaniko</td><td>S2I generates Dockerfile, kaniko builds it</td><td><span class="tag tag-green">Yes</span></td><td>amd64</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>How Do They Differ?</h3>
+    <p style="color:var(--text-dim);margin-bottom:1rem">Quick decision guide — pick based on your constraints:</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Dimension</th><th>Buildah</th><th>Kaniko</th><th>BuildKit</th><th>Buildpacks</th><th>ko</th><th>S2I</th></tr>
+        <tr><td><strong>Needs Dockerfile?</strong></td><td><span class="tag tag-green">Yes</span></td><td><span class="tag tag-green">Yes</span></td><td><span class="tag tag-green">Yes</span></td><td>No</td><td>No</td><td>No</td></tr>
+        <tr><td><strong>Best for</strong></td><td>General purpose, OCI-native</td><td>Locked-down clusters</td><td>Speed, caching, multi-stage</td><td>Source-only devs</td><td>Go projects</td><td>Legacy OpenShift</td></tr>
+        <tr><td><strong>Cache support</strong></td><td>Layer cache</td><td>Layer cache</td><td>Advanced (inline, registry, local)</td><td>Layer reuse</td><td>Go module cache</td><td>Incremental builds</td></tr>
+        <tr><td><strong>Multi-arch</strong></td><td><span class="tag tag-green">Yes</span> (dedicated strategy)</td><td>Single arch</td><td><span class="tag tag-green">Yes</span> (cross-compile)</td><td>Single arch</td><td><span class="tag tag-green">Yes</span></td><td>Single arch</td></tr>
+        <tr><td><strong>Privileged?</strong></td><td>No (rootless)</td><td>No (userspace)</td><td>Needs setup</td><td>No (rootless)</td><td>No</td><td>No</td></tr>
+        <tr><td><strong>Tradeoff</strong></td><td>Jack of all trades</td><td>Slower but zero-privilege</td><td>Fastest but needs config</td><td>No control over image layers</td><td>Go-only</td><td>Fewer maintainers, limited to amd64</td></tr>
       </table>
     </div>
   </div>
